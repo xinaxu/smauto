@@ -32,7 +32,7 @@ export default class SessionManager {
     }
   }
 
-  private print() {
+  private print () {
     const data: string[][] = []
     data.push(['Instance ID', 'Status', 'Host', 'Port', 'GPU', 'Price', 'Tunnel Port', 'SSH PID', 'CPU Usage', 'GPU Usage'])
     for (let session of this.sessions) {
@@ -118,7 +118,7 @@ export default class SessionManager {
       logger.debug(`Check if the instance is reachable and ready for SSH: ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -p ${session.instance.direct_port_start} root@${session.instance.public_ipaddr} 'ps aux'`)
       let stderr = ''
       let stdout = ''
-       pRetry(async () => {
+      await pRetry(async () => {
         const sshResult = await execa(
           'ssh',
           ['-o', 'ConnectTimeout=5', '-o', 'StrictHostKeyChecking=no', '-p',
@@ -170,7 +170,7 @@ export default class SessionManager {
     const sshTunnels: SSHTunnel[] = []
     // autossh -f -M 0 -L 10001:localhost:10088 -o "ServerAliveInterval=30" -o "ServerAliveCountMax=3" -p 46661 root@fiber1.kmidata.es
     const { stdout } = await execa('ps', ['-C', 'autossh', '-o', 'pid=,cmd='], { reject: false })
-    logger.debug("autossh stdout: \n" + stdout)
+    logger.debug('autossh stdout: \n' + stdout)
     const lines = (stdout as any as string).split('\n')
     for (const line of stdout === '' ? [] : lines) {
       // pid is the first integer in the line
