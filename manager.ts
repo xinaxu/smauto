@@ -101,7 +101,7 @@ export default class SessionManager {
         if (session.instance.actual_status === 'running') {
           return false
         }
-        if (session.instance.status_msg?.toLowerCase()?.includes('error') === true) {
+        if (session.instance.status_msg?.includes('Error response from daemon') === true) {
           logger.warn(`Instance ${session.instance.id} has an error ${session.instance.status_msg}`)
           return true
         }
