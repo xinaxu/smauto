@@ -68,6 +68,7 @@ export default class SessionManager {
       offer.gpu_name.includes('4090') ?
         offer.total_flops / offer.dph_total > 82.6 / 0.5 :
         offer.total_flops / offer.dph_total > 35.3 / 0.3)
+      .filter(offer => offer.inet_up > 4 * offer.total_flops)
     if (offers.length === 0) {
       logger.warn('No suitable offers found')
       return
@@ -115,7 +116,7 @@ export default class SessionManager {
             return false
           }
           if (session.instance.status_msg?.includes('Error response from daemon') === true
-          || session.instance.status_msg?.includes('docker: invalid hostPort') === true) {
+            || session.instance.status_msg?.includes('docker: invalid hostPort') === true) {
             logger.warn(`Instance ${session.instance.id} has an error ${session.instance.status_msg}`)
             return true
           }
@@ -124,7 +125,7 @@ export default class SessionManager {
           retries: 10, minTimeout: 30000, maxTimeout: 30000
         })
       } catch (e) {
-        logger.error(e,`Instance ${session.instance.id} is not ready.`)
+        logger.error(e, `Instance ${session.instance.id} is not ready.`)
         await this.blockAndTerminate(session.instance)
         return
       }
@@ -154,8 +155,9 @@ export default class SessionManager {
           throw new Error(`Instance ${session.instance.id} is not ready. What's going on?`)
         }, {
           retries: 3, minTimeout: 30000, maxTimeout: 30000
-        })} catch (e) {
-        logger.warn({stderr, stdout}, `Instance ${session.instance.id} cannot be connected to.`)
+        })
+      } catch (e) {
+        logger.warn({ stderr, stdout }, `Instance ${session.instance.id} cannot be connected to.`)
         await this.blockAndTerminate(session.instance)
         return
       }
