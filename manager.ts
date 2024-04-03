@@ -45,7 +45,7 @@ export default class SessionManager {
           session.instance.direct_port_start.toString(),
           'root@' + session.instance.public_ipaddr, 'nvidia-smi'],
         { reject: false })
-      if (sshResult.all != null && sshResult.all.includes('Unable to determine the device handle')) {
+      if (sshResult.stdout.includes('Unable to determine the device handle')) {
         logger.warn(`GPU on Instance ${session.instance.id} is down`)
         await this.blockAndTerminate(session.instance)
       }
