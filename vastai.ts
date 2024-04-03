@@ -10,6 +10,7 @@ export default class VastAI {
 
   public constructor (
     private readonly apiKey: string,
+    private readonly countries: string,
     private readonly type: 'bid' | 'reserved' | 'on-demand' = 'on-demand',
     private readonly reliability: number = 0.95,
     private readonly verified: boolean = false,
@@ -86,7 +87,7 @@ export default class VastAI {
 
   public async getOffers (blockedMachineIDs: number[] = []): Promise<OfferResponse> {
     return this.wrap(async () => {
-      const response = await axios.post(this.getURL('bundles/'), {
+      const data: any = {
         disk_space: {
           gte: this.storage
         },
@@ -135,7 +136,13 @@ export default class VastAI {
         gpu_name: {
           notin: ['RTX A2000']
         }
-      })
+      }
+      if (this.countries !== '' ) {
+        data['geolocation'] = {
+          in: this.countries.split(',')
+        }
+      }
+      const response = await axios.post(this.getURL('bundles/'), data)
       return response.data as any
     })
   }
