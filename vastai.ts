@@ -51,13 +51,13 @@ export default class VastAI {
       try {
         return await fn()
       } catch (error: any) {
-        logger.error(error)
+        logger.error(`VastAI error: ${error.message}`)
         if (error instanceof AxiosError && (error.status === undefined || error.status === 429)) {
           throw error
         }
         throw new AbortError(error.message)
       }
-    }, { retries: 5 })
+    }, { retries: 3, minTimeout: 10000, maxTimeout: 30000 })
   }
 
   public async createInstance (id: number): Promise<CreateInstanceResponse> {
