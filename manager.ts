@@ -226,6 +226,9 @@ export default class SessionManager {
         '-o', 'StrictHostKeyChecking=no', '-p',
         session.instance.direct_port_start.toString(),
         `root@${session.instance.public_ipaddr}`])
+
+      await sleep(2000)
+      await this.updateSessions()
     }
   }
 
