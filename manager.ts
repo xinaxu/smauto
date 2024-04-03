@@ -5,6 +5,7 @@ import { sleep } from './util.ts'
 import fs from 'fs/promises'
 import logger from './logger.ts'
 import { table } from 'table'
+import pRetry from 'p-retry'
 
 export default class SessionManager {
   private blockedMachineIDs: number[] = []
@@ -93,20 +94,23 @@ export default class SessionManager {
       if (session.sshTunnel) {
         continue
       }
-      for (let i = 0; i < 10; i++) {
+      const failed = await pRetry(async () => {
         logger.debug(`Checking instance status for ${session.instance.id}`)
         session.instance = (await this.vastai.getInstance(session.instance.id)).instances
         logger.debug(`Instance status: ${session.instance.actual_status}, last msg: ${session.instance.status_msg}`)
         if (session.instance.actual_status === 'running') {
-          break
+          return false
         }
         if (session.instance.status_msg?.toLowerCase()?.includes('error') === true) {
           logger.warn(`Instance ${session.instance.id} has an error ${session.instance.status_msg}`)
-          break
+          return true
         }
-        await sleep(5000)
-      }
-      if (session.instance.actual_status !== 'running') {
+        throw new Error(`Instance ${session.instance.id} is not ready. What's going on?`)
+      }, {
+        retries: 10, minTimeout: 30000, maxTimeout: 30000
+      })
+
+      if (failed) {
         await this.blockAndTerminate(session.instance)
         return
       }
@@ -134,7 +138,6 @@ export default class SessionManager {
       if (!instanceReady) {
         logger.warn({stderr, stdout}, `Instance ${session.instance.id} cannot be connected to`)
         throw new Error(`Instance ${session.instance.id} cannot be connected to`)
-        return
       }
 
       logger.debug('Start SSH tunneling')
