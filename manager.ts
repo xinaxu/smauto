@@ -66,8 +66,8 @@ export default class SessionManager {
     }
     const offers = (await this.vastai.getOffers(this.blockedMachineIDs)).offers.filter(offer =>
       offer.gpu_name.includes('4090') ?
-        offer.total_flops / offer.dph_total > 82.6 / 0.5 :
-        offer.total_flops / offer.dph_total > 35.3 / 0.3)
+        offer.total_flops / offer.dph_total > 82.6 / 0.4 :
+        offer.total_flops / offer.dph_total > 35.3 / 0.2)
       .filter(offer => offer.inet_up > 4 * offer.total_flops)
     if (offers.length === 0) {
       logger.warn('No suitable offers found')
