@@ -29,7 +29,7 @@ export default class SessionManager {
       await this.createNewInstance()
       await this.createTunnels()
       await this.print()
-      await sleep(15000)
+      await sleep(30000)
     }
   }
 
