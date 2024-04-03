@@ -223,7 +223,7 @@ export default class SessionManager {
         throw new Error(`Could not parse local port: ${line}`)
       }
       const localPort = parseInt(localPortMatch[1])
-      logger.info(`Found autossh tunnel with pid ${pid} on port ${localPort} to ${host}:${remotePort}`)
+      logger.debug(`Found autossh tunnel with pid ${pid} on port ${localPort} to ${host}:${remotePort}`)
       sshTunnels.push({
         pid,
         tunnelPort: localPort,
@@ -243,7 +243,7 @@ export default class SessionManager {
     for (const session of sessions) {
       const tunnel = sshTunnels.find(tunnel => tunnel.host === session.instance.public_ipaddr && tunnel.port === session.instance.direct_port_start)
       if (tunnel) {
-        logger.info(`Found tunnel for instance ${session.instance.id} with pid ${tunnel.pid} on port ${tunnel.tunnelPort} to ${tunnel.host}:${tunnel.port}`)
+        logger.debug(`Found tunnel for instance ${session.instance.id} with pid ${tunnel.pid} on port ${tunnel.tunnelPort} to ${tunnel.host}:${tunnel.port}`)
         session.sshTunnel = tunnel
       }
     }
