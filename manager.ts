@@ -146,10 +146,8 @@ export default class SessionManager {
   }
 
   private async createTunnels (): Promise<void> {
-    for (const session of this.sessions) {
-      if (session.sshTunnel) {
-        continue
-      }
+    while (this.sessions.some(session => session.sshTunnel === undefined)) {
+      const session = this.sessions.find(session => session.sshTunnel === undefined)!
       let failed = false
       try {
         failed = await pRetry(async () => {
