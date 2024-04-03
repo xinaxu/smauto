@@ -6,7 +6,6 @@ import fs from 'fs/promises'
 import logger from './logger.ts'
 import { table } from 'table'
 import pRetry from 'p-retry'
-import { AxiosError } from 'axios'
 
 export default class SessionManager {
   private blockedMachineIDs: number[] = []
@@ -26,10 +25,30 @@ export default class SessionManager {
     logger.debug(`Blocked machines: ${this.blockedMachineIDs.join(',')}`)
     while (true) {
       await this.updateSessions()
+      this.print()
       await this.createNewInstance()
       await this.createTunnels()
-      await this.print()
+      await this.monitor()
       await sleep(30000)
+    }
+  }
+
+  private async monitor () {
+    for (let session of this.sessions) {
+      if (session.sshTunnel === undefined) {
+        continue
+      }
+
+      const sshResult = await execa(
+        'ssh',
+        ['-o', 'ConnectTimeout=5', '-o', 'StrictHostKeyChecking=no', '-p',
+          session.instance.direct_port_start.toString(),
+          'root@' + session.instance.public_ipaddr, 'nvidia-smi'],
+        { reject: false })
+      if (sshResult.all != null && sshResult.all.includes('Unable to determine the device handle')) {
+        logger.warn(`GPU on Instance ${session.instance.id} is down`)
+        await this.blockAndTerminate(session.instance)
+      }
     }
   }
 
