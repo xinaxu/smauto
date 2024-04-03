@@ -115,11 +115,10 @@ export default class SessionManager {
         return
       }
 
-      logger.debug('Check if the instance is reachable and ready for SSH')
-      let instanceReady = false
+      logger.debug(`Check if the instance is reachable and ready for SSH: ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -p ${session.instance.direct_port_start} root@${session.instance.public_ipaddr} 'ps aux'`)
       let stderr = ''
       let stdout = ''
-      for (let i = 0; i < 10; i++) {
+       pRetry(async () => {
         const sshResult = await execa(
           'ssh',
           ['-o', 'ConnectTimeout=5', '-o', 'StrictHostKeyChecking=no', '-p',
@@ -130,15 +129,10 @@ export default class SessionManager {
         stdout = sshResult.stdout
         if (stdout.includes('-gpuServer')) {
           logger.info(`Instance ${session.instance.id} is ready`)
-          instanceReady = true
-          break
+          return
         }
-        await sleep(5000)
-      }
-      if (!instanceReady) {
-        logger.warn({stderr, stdout}, `Instance ${session.instance.id} cannot be connected to`)
-        throw new Error(`Instance ${session.instance.id} cannot be connected to`)
-      }
+        throw new Error(`Instance ${session.instance.id} is not ready. What's going on?`)
+      })
 
       logger.debug('Start SSH tunneling')
       let tunnelPort = 0
