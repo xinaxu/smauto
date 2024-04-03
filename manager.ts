@@ -209,7 +209,7 @@ export default class SessionManager {
     // Terminating tunnels that does not have a corresponding instance
     for (const tunnel of sshTunnels) {
       if (!sessions.find(session => session.instance.public_ipaddr === tunnel.host && session.instance.direct_port_start === tunnel.port)) {
-        logger.info(`Terminating tunnel with pid ${tunnel.pid}`)
+        logger.warn(`Terminating tunnel with pid ${tunnel.pid}`)
         await execa('kill', [tunnel.pid.toString()])
       }
     }
