@@ -28,7 +28,7 @@ export default class SessionManager {
       await this.createNewInstance()
       await this.createTunnels()
       await this.print()
-      await sleep(10000)
+      await sleep(15000)
     }
   }
 
@@ -132,6 +132,8 @@ export default class SessionManager {
           return
         }
         throw new Error(`Instance ${session.instance.id} is not ready. What's going on?`)
+      }, {
+        retries: 3, minTimeout: 30000, maxTimeout: 30000
       })
 
       logger.debug('Start SSH tunneling')
