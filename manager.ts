@@ -173,7 +173,7 @@ export default class SessionManager {
     const sshTunnels: SSHTunnel[] = []
     // autossh -f -M 0 -L 10001:localhost:10088 -o "ServerAliveInterval=30" -o "ServerAliveCountMax=3" -p 46661 root@fiber1.kmidata.es
     const { stdout } = await execa('ps', ['-C', 'autossh', '-o', 'pid=,cmd='], { reject: false })
-    logger.debug(`autossh stdout: ${stdout}`)
+    logger.debug("autossh stdout: \n" + stdout)
     const lines = (stdout as any as string).split('\n')
     for (const line of stdout === '' ? [] : lines) {
       // pid is the first integer in the line
