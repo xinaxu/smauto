@@ -51,6 +51,7 @@ export default class VastAI {
       try {
         return await fn()
       } catch (error: any) {
+        logger.error(error)
         if (error instanceof AxiosError && error.status === undefined) {
           throw error
         }
