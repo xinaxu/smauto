@@ -39,13 +39,13 @@ export default class SessionManager {
         session.instance.id.toString(),
         session.instance.actual_status,
         session.instance.public_ipaddr,
-        session.instance.direct_port_start.toString(),
+        session.instance.direct_port_start?.toString(),
         `${session.instance.gpu_name} x ${session.instance.num_gpus}`,
-        '$' + session.instance.dph_total.toFixed(3),
+        '$' + session.instance.dph_total?.toFixed(3),
         session.sshTunnel?.tunnelPort.toString() || '',
         session.sshTunnel?.pid.toString() || '',
-        session.instance.cpu_util.toFixed(0) + '%',
-        session.instance.gpu_util.toFixed(0) + '%'
+        session.instance.cpu_util?.toFixed(0) + '%',
+        session.instance.gpu_util?.toFixed(0) + '%'
       ])
     }
     console.log(table(data))
@@ -133,7 +133,7 @@ export default class SessionManager {
       }
       if (!instanceReady) {
         logger.warn({stderr, stdout}, `Instance ${session.instance.id} cannot be connected to`)
-        await this.blockAndTerminate(session.instance)
+        throw new Error(`Instance ${session.instance.id} cannot be connected to`)
         return
       }
 
