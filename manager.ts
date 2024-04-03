@@ -9,6 +9,7 @@ import pRetry from 'p-retry'
 
 export default class SessionManager {
   private blockedMachineIDs: number[] = []
+  private throttledIPs: string[] = []
   private sessions: Session[] = []
 
   constructor (private readonly vastai: VastAI,
@@ -22,6 +23,14 @@ export default class SessionManager {
       flag: 'a+' // create file if it doesn't exist
     })
     this.blockedMachineIDs = blockedMachines.trim().split(',').map(id => parseInt(id))
+    await this.loadThrottledIPs()
+    async () => {
+      while (true) {
+        await sleep(10000)
+        await this.loadThrottledIPs()
+      }
+    }
+
     logger.debug(`Blocked machines: ${this.blockedMachineIDs.join(',')}`)
     while (true) {
       await this.updateSessions()
@@ -31,6 +40,14 @@ export default class SessionManager {
       await this.monitor()
       await sleep(60000)
     }
+  }
+
+  private async loadThrottledIPs () {
+    const throttledIPs = await fs.readFile('throttled_ips.txt', {
+      encoding: 'utf-8',
+      flag: 'a+' // create file if it doesn't exist
+    })
+    this.throttledIPs = throttledIPs.trim().split(',')
   }
 
   private async monitor () {
@@ -79,36 +96,34 @@ export default class SessionManager {
   }
 
   private async createNewInstance (): Promise<void> {
-    if (this.sessions.length >= this.maxSessions) {
-      logger.info(`${this.sessions.length} sessions already running, not creating another`)
-      return
-    }
-    const offers = (await this.vastai.getOffers(this.blockedMachineIDs)).offers.filter(offer =>
-      offer.gpu_name.includes('4090') ?
-        offer.total_flops / offer.dph_total > 82.6 / 0.4 :
-        offer.total_flops / offer.dph_total > 35.3 / 0.2)
-      .filter(offer => offer.inet_up > 4 * offer.total_flops)
-    if (offers.length === 0) {
-      logger.warn('No suitable offers found')
-      return
-    }
+    for (let i = this.sessions.length; i < this.maxSessions; ++i) {
+      const offers = (await this.vastai.getOffers(this.blockedMachineIDs)).offers.filter(offer =>
+        offer.gpu_name.includes('4090') ?
+          offer.total_flops / offer.dph_total > 82.6 / 0.4 :
+          offer.total_flops / offer.dph_total > 35.3 / 0.2)
+        .filter(offer => offer.inet_up > 4 * offer.total_flops)
+      if (offers.length === 0) {
+        logger.warn('No suitable offers found')
+        return
+      }
 
-    const offer = offers[0]
-    logger.info(`Creating instance with offer ${offer.id} - ${offer.gpu_name}x${offer.num_gpus}`)
-    try {
-      const createResponse = await this.vastai.createInstance(offer.id)
-      if (createResponse.success) {
-        logger.info(`Instance creation succeeded. New instance: ${createResponse.new_contract}`)
-      } else {
-        logger.error(`Instance creation failed.`)
-        return
+      const offer = offers[0]
+      logger.info(`Creating instance with offer ${offer.id} - ${offer.gpu_name}x${offer.num_gpus}`)
+      try {
+        const createResponse = await this.vastai.createInstance(offer.id)
+        if (createResponse.success) {
+          logger.info(`Instance creation succeeded. New instance: ${createResponse.new_contract}`)
+        } else {
+          logger.error(`Instance creation failed.`)
+          return
+        }
+      } catch (e: any) {
+        if (e.message.includes('410') || e.message.includes('404')) {
+          logger.error(e, `Error creating instance, but we'll go ahead`)
+          return
+        }
+        throw e
       }
-    } catch (e: any) {
-      if (e.message.includes('410') || e.message.includes('404')) {
-        logger.error(e, `Error creating instance, but we'll go ahead`)
-        return
-      }
-      throw e
     }
   }
 
