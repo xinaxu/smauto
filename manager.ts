@@ -111,7 +111,7 @@ export default class SessionManager {
           logger.debug(`Checking instance status for ${session.instance.id}`)
           session.instance = (await this.vastai.getInstance(session.instance.id)).instances
           logger.debug(`Instance status: ${session.instance.actual_status}, last msg: ${session.instance.status_msg}`)
-          if (session.instance.actual_status === 'running') {
+          if (session.instance.actual_status === 'running' && session.instance.direct_port_start > 0) {
             return false
           }
           if (session.instance.status_msg?.includes('Error response from daemon') === true
