@@ -29,7 +29,13 @@ export default class VastAI {
   public async getInstances (): Promise<{ instances: InstanceDetail[] }> {
     return this.wrap(async () => {
       const response = await axios.get(this.getURL('instances'))
-      return response.data
+      const data = response.data as { instances: InstanceDetail[] }
+      for (let instance of data.instances) {
+        if (instance.public_ipaddr) {
+          instance.public_ipaddr = instance.public_ipaddr.trim().toLowerCase()
+        }
+      }
+      return data
     })
   }
 
@@ -70,7 +76,11 @@ export default class VastAI {
   public async getInstance (instanceID: number): Promise<{ instances: InstanceDetail }> {
     return this.wrap(async () => {
       const response = await axios.get(this.getURL(`instances/${instanceID}`))
-      return response.data
+      const data = response.data as { instances: InstanceDetail }
+      if (data.instances.public_ipaddr) {
+        data.instances.public_ipaddr = data.instances.public_ipaddr.trim().toLowerCase()
+      }
+      return data
     })
   }
 
