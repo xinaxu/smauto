@@ -52,7 +52,7 @@ export default class VastAI {
         return await fn()
       } catch (error: any) {
         logger.error(`VastAI error: ${error.message}`)
-        if (error instanceof AxiosError && (error.status === undefined || error.status === 429)) {
+        if (error.message.includes('429') || !(error instanceof AxiosError)) {
           throw error
         }
         throw new AbortError(error.message)

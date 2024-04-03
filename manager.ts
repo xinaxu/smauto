@@ -85,11 +85,9 @@ export default class SessionManager {
         return
       }
     } catch (e: any) {
-      if (e instanceof AxiosError) {
-        if (e.status && (e.status == 410 || e.status == 404)) {
-          logger.error(e, `Error creating instance, but we'll go ahead`)
-          return
-        }
+      if (e.message.includes('410') || e.message.includes('404')) {
+        logger.error(e, `Error creating instance, but we'll go ahead`)
+        return
       }
       throw e
     }
