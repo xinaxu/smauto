@@ -11,7 +11,7 @@ export default class VastAI {
   public constructor (
     private readonly apiKey: string,
     private readonly countries: string,
-    private readonly type: ('bid' | 'reserved' | 'on-demand')[] = ['bid','on-demand'],
+    private readonly type: ('bid' | 'reserved' | 'on-demand')[] = ['on-demand'],
     private readonly reliability: number = 0.95,
     private readonly verified: boolean = false,
     private readonly external: boolean = true,
@@ -68,7 +68,7 @@ export default class VastAI {
         image: 'nvidia/opencl:latest',
         disk: this.storage,
         onstart: VastAI.script,
-        runtype: 'ssh ssh_direc ssh_proxy'
+        runtype: 'ssh ssh_direc ssh_proxy',
       }
       const response = await axios.put(url, data)
       return response.data as CreateInstanceResponse
