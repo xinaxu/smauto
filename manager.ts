@@ -96,18 +96,30 @@ export default class SessionManager {
   }
 
   private async createNewInstance (): Promise<void> {
+    if (this.sessions.length >= this.maxSessions) {
+      return
+    }
+    const offers = (await this.vastai.getOffers(this.blockedMachineIDs)).offers.filter(offer =>
+      offer.gpu_name.includes('4090') ?
+        offer.total_flops / offer.dph_total > 82.6 / 0.4 :
+        offer.total_flops / offer.dph_total > 35.3 / 0.24)
+      .filter(offer => offer.inet_up > 4 * offer.total_flops)
+      .filter(offer => {
+        const found = this.throttledIPs.find(ip => offer.public_ipaddr.startsWith(ip))
+        if (!found) {
+          return true
+        }
+        return !this.sessions.some(session => session.instance.public_ipaddr.startsWith(found))
+      })
+    if (offers.length === 0) {
+      logger.warn('No suitable offers found')
+      return
+    }
     for (let i = this.sessions.length; i < this.maxSessions; ++i) {
-      const offers = (await this.vastai.getOffers(this.blockedMachineIDs)).offers.filter(offer =>
-        offer.gpu_name.includes('4090') ?
-          offer.total_flops / offer.dph_total > 82.6 / 0.4 :
-          offer.total_flops / offer.dph_total > 35.3 / 0.24)
-        .filter(offer => offer.inet_up > 4 * offer.total_flops)
-      if (offers.length === 0) {
-        logger.warn('No suitable offers found')
+      const offer = offers.shift()
+      if (!offer) {
         return
       }
-
-      const offer = offers[0]
       logger.info(`Creating instance with offer ${offer.id} - ${offer.gpu_name}x${offer.num_gpus}`)
       try {
         const createResponse = await this.vastai.createInstance(offer.id)
