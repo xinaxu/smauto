@@ -6,6 +6,7 @@ import fs from 'fs/promises'
 import logger from './logger.ts'
 import { table } from 'table'
 import pRetry from 'p-retry'
+import { AxiosError } from 'axios'
 
 export default class SessionManager {
   private blockedMachineIDs: number[] = []
@@ -74,12 +75,22 @@ export default class SessionManager {
 
     const offer = offers[0]
     logger.info(`Creating instance with offer ${offer.id} - ${offer.gpu_name}x${offer.num_gpus}`)
-    const createResponse = await this.vastai.createInstance(offer.id)
-    if (createResponse.success) {
-      logger.info(`Instance creation succeeded. New instance: ${createResponse.new_contract}`)
-    } else {
-      logger.error(`Instance creation failed.`)
-      return
+    try {
+      const createResponse = await this.vastai.createInstance(offer.id)
+      if (createResponse.success) {
+        logger.info(`Instance creation succeeded. New instance: ${createResponse.new_contract}`)
+      } else {
+        logger.error(`Instance creation failed.`)
+        return
+      }
+    } catch (e: any) {
+      if (e instanceof AxiosError) {
+        if (e.status && (e.status == 410 || e.status == 404)) {
+          logger.error(e, `Error creating instance, but we'll go ahead`)
+          return
+        }
+      }
+      throw e
     }
   }
 
