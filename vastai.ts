@@ -131,6 +131,9 @@ export default class VastAI {
         },
         machine_id: {
           notin: blockedMachineIDs
+        },
+        gpu_name: {
+          notin: ['RTX A2000']
         }
       })
       return response.data as any
