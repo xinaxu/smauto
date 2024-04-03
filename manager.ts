@@ -118,23 +118,28 @@ export default class SessionManager {
       logger.debug(`Check if the instance is reachable and ready for SSH: ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -p ${session.instance.direct_port_start} root@${session.instance.public_ipaddr} 'ps aux'`)
       let stderr = ''
       let stdout = ''
-      await pRetry(async () => {
-        const sshResult = await execa(
-          'ssh',
-          ['-o', 'ConnectTimeout=5', '-o', 'StrictHostKeyChecking=no', '-p',
-            session.instance.direct_port_start.toString(),
-            'root@' + session.instance.public_ipaddr, 'ps aux'],
-          { reject: false })
-        stderr = sshResult.stderr
-        stdout = sshResult.stdout
-        if (stdout.includes('-gpuServer')) {
-          logger.info(`Instance ${session.instance.id} is ready`)
-          return
-        }
-        throw new Error(`Instance ${session.instance.id} is not ready. What's going on?`)
-      }, {
-        retries: 3, minTimeout: 30000, maxTimeout: 30000
-      })
+      try {
+        await pRetry(async () => {
+          const sshResult = await execa(
+            'ssh',
+            ['-o', 'ConnectTimeout=5', '-o', 'StrictHostKeyChecking=no', '-p',
+              session.instance.direct_port_start.toString(),
+              'root@' + session.instance.public_ipaddr, 'ps aux'],
+            { reject: false })
+          stderr = sshResult.stderr
+          stdout = sshResult.stdout
+          if (stdout.includes('-gpuServer')) {
+            logger.info(`Instance ${session.instance.id} is ready`)
+            return
+          }
+          throw new Error(`Instance ${session.instance.id} is not ready. What's going on?`)
+        }, {
+          retries: 3, minTimeout: 30000, maxTimeout: 30000
+        })} catch (e) {
+        logger.warn({stderr, stdout}, `Instance ${session.instance.id} cannot be connected to.`)
+        await this.blockAndTerminate(session.instance)
+        return
+      }
 
       logger.debug('Start SSH tunneling')
       let tunnelPort = 0
