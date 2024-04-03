@@ -94,21 +94,28 @@ export default class SessionManager {
       if (session.sshTunnel) {
         continue
       }
-      const failed = await pRetry(async () => {
-        logger.debug(`Checking instance status for ${session.instance.id}`)
-        session.instance = (await this.vastai.getInstance(session.instance.id)).instances
-        logger.debug(`Instance status: ${session.instance.actual_status}, last msg: ${session.instance.status_msg}`)
-        if (session.instance.actual_status === 'running') {
-          return false
-        }
-        if (session.instance.status_msg?.includes('Error response from daemon') === true) {
-          logger.warn(`Instance ${session.instance.id} has an error ${session.instance.status_msg}`)
-          return true
-        }
-        throw new Error(`Instance ${session.instance.id} is not ready. What's going on?`)
-      }, {
-        retries: 10, minTimeout: 30000, maxTimeout: 30000
-      })
+      let failed = false
+      try {
+        failed = await pRetry(async () => {
+          logger.debug(`Checking instance status for ${session.instance.id}`)
+          session.instance = (await this.vastai.getInstance(session.instance.id)).instances
+          logger.debug(`Instance status: ${session.instance.actual_status}, last msg: ${session.instance.status_msg}`)
+          if (session.instance.actual_status === 'running') {
+            return false
+          }
+          if (session.instance.status_msg?.includes('Error response from daemon') === true) {
+            logger.warn(`Instance ${session.instance.id} has an error ${session.instance.status_msg}`)
+            return true
+          }
+          throw new Error(`Instance ${session.instance.id} is not ready. What's going on? ${session.instance.status_msg}`)
+        }, {
+          retries: 10, minTimeout: 30000, maxTimeout: 30000
+        })
+      } catch (e) {
+        logger.error(e,`Instance ${session.instance.id} is not ready.`)
+        await this.blockAndTerminate(session.instance)
+        return
+      }
 
       if (failed) {
         await this.blockAndTerminate(session.instance)
