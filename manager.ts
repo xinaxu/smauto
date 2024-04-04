@@ -66,6 +66,11 @@ export default class SessionManager {
         logger.warn(`GPU on Instance ${session.instance.id} is down`)
         await this.blockAndTerminate(session.instance)
       }
+
+      if (session.instance.actual_status === 'exited') {
+        logger.warn(`Instance ${session.instance.id} is exited, terminating`)
+        await this.vastai.terminateInstance(session.instance.id)
+      }
     }
   }
 
