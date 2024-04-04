@@ -133,7 +133,8 @@ export default class VastAI {
         },
         machine_id: {
           notin: blockedMachineIDs
-        }
+        },
+        limit: 1000
       }
       if (this.countries !== '' ) {
         data['geolocation'] = {

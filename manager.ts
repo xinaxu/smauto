@@ -14,6 +14,7 @@ export default class SessionManager {
 
   constructor (private readonly vastai: VastAI,
     private readonly maxSessions: number = 1,
+    private readonly max3090Price: number = 0.24,
   ) {}
 
   public async run () {
@@ -106,8 +107,8 @@ export default class SessionManager {
     }
     const offers = (await this.vastai.getOffers(this.blockedMachineIDs)).offers.filter(offer =>
       offer.gpu_name.includes('4090') ?
-        offer.total_flops / offer.dph_total > 82.6 / 0.4 :
-        offer.total_flops / offer.dph_total > 35.3 / 0.24)
+        offer.total_flops / offer.dph_total > 82.6 / (this.max3090Price / 0.6) :
+        offer.total_flops / offer.dph_total > 35.3 / this.max3090Price)
       .filter(offer => offer.inet_up > 4 * offer.total_flops)
       .filter(offer => {
         const found = this.throttledIPs.find(ip => offer.public_ipaddr.startsWith(ip))
