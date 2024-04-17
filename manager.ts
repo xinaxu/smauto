@@ -11,6 +11,7 @@ export default class SessionManager {
   private blockedMachineIDs: number[] = []
   private throttledIPs: string[] = []
   private sessions: Session[] = []
+  private usage: { [key: string]: number[] } = {}
 
   constructor (private readonly vastai: VastAI,
     private readonly maxSessions: number = 1,
@@ -61,11 +62,33 @@ export default class SessionManager {
         'ssh',
         ['-o', 'ConnectTimeout=5', '-o', 'StrictHostKeyChecking=no', '-p',
           session.instance.direct_port_start.toString(),
-          'root@' + session.instance.public_ipaddr, 'nvidia-smi'],
+          'root@' + session.instance.public_ipaddr, 'nvidia-smi --query-gpu=power.draw,power.limit --format=csv,noheader,nounits'],
         { reject: false })
       if (sshResult.stdout.includes('Unable to determine the device handle')) {
         logger.warn(`GPU on Instance ${session.instance.id} is down`)
         await this.blockAndTerminate(session.instance)
+      }
+
+      const utilizations :number[] = []
+      for (let line of sshResult.stdout.split('\n')) {
+        const cells = line.split(',')
+        if (cells.length !== 2) {
+          continue
+        }
+        const power = parseFloat(cells[0])
+        const limit = parseFloat(cells[1])
+        utilizations.push(power / limit)
+      }
+      if (utilizations.length === 0) {
+        logger.warn(`No GPU found on Instance ${session.instance.id}`)
+      } else {
+        const avgUtilization = utilizations.reduce((a, b) => a + b, 0) / utilizations.length
+        this.usage[session.instance.id.toString()] = this.usage[session.instance.id.toString()] || []
+        this.usage[session.instance.id.toString()].push(avgUtilization)
+        const avgUsage = this.usage[session.instance.id.toString()].reduce((a, b) => a + b, 0) / this.usage[session.instance.id.toString()].length
+        if (this.usage[session.instance.id.toString()].length > 30 && avgUsage < 0.1) {
+          logger.warn(`GPU on Instance ${session.instance.id} is underutilized: ${avgUsage}`)
+        }
       }
 
       if (session.instance.actual_status === 'exited') {
@@ -77,8 +100,9 @@ export default class SessionManager {
 
   private print () {
     const data: string[][] = []
-    data.push(['Instance ID', 'Status', 'Host', 'Port', 'GPU', 'Price', 'Tunnel Port', 'SSH PID', 'CPU Usage', 'GPU Usage'])
+    data.push(['Instance ID', 'Status', 'Host', 'Port', 'GPU', 'Price', 'Tunnel Port', 'SSH PID', 'GPU Usage','Reported Usage'])
     for (let session of this.sessions) {
+      const avgUsage = this.usage[session.instance.id.toString()]?.reduce((a, b) => a + b, 0) / this.usage[session.instance.id.toString()]?.length
       data.push([
         session.instance.id.toString(),
         session.instance.actual_status,
@@ -88,8 +112,8 @@ export default class SessionManager {
         '$' + session.instance.dph_total?.toFixed(3),
         session.sshTunnel?.tunnelPort.toString() || '',
         session.sshTunnel?.pid.toString() || '',
-        session.instance.cpu_util?.toFixed(0) + '%',
-        session.instance.gpu_util?.toFixed(0) + '%'
+        session.instance.gpu_util?.toFixed(0) + '%',
+        (avgUsage * 100).toFixed(0) + '%'
       ])
     }
     console.log(table(data))
