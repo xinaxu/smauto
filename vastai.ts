@@ -18,7 +18,7 @@ export default class VastAI {
     private readonly inetUp: number = 400,
     private readonly inetUpCost: number = 0.005,
     private readonly inetDownCost: number = 0.004,
-    private readonly tflops: number = 25,
+    private readonly tflops: number = 20,
     private readonly storage: number = 8,
   ) {
   }
