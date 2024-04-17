@@ -217,6 +217,7 @@ export default class SessionManager {
           continue
         }
         tunnelPort = i
+        break
       }
       if (tunnelPort === 0) {
         throw new Error('No available tunnel port')
