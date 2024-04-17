@@ -89,6 +89,9 @@ export default class VastAI {
   public async getOffers (blockedMachineIDs: number[] = []): Promise<OfferResponse> {
     return this.wrap(async () => {
       const data: any = {
+        cpu_cores_effective:{
+          gte: 1.0
+        },
         disk_space: {
           gte: this.storage
         },
