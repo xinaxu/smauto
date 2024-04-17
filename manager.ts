@@ -80,7 +80,7 @@ export default class SessionManager {
         utilizations.push(power / limit)
       }
       if (utilizations.length === 0) {
-        logger.warn(`No GPU found on Instance ${session.instance.id}`)
+        logger.warn(`No GPU found on Instance ${session.instance.id}: ${sshResult.stdout}`)
       } else {
         const avgUtilization = utilizations.reduce((a, b) => a + b, 0) / utilizations.length
         this.usage[session.instance.id.toString()] = this.usage[session.instance.id.toString()] || []
