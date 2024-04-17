@@ -16,6 +16,7 @@ export default class SessionManager {
   constructor (private readonly vastai: VastAI,
     private readonly maxSessions: number = 1,
     private readonly max3090Price: number = 0.24,
+    private readonly utilizationThreshold: number = 0.55
   ) {}
 
   public async run () {
@@ -86,8 +87,9 @@ export default class SessionManager {
         this.usage[session.instance.id.toString()] = this.usage[session.instance.id.toString()] || []
         this.usage[session.instance.id.toString()].push(avgUtilization)
         const avgUsage = this.usage[session.instance.id.toString()].reduce((a, b) => a + b, 0) / this.usage[session.instance.id.toString()].length
-        if (this.usage[session.instance.id.toString()].length > 30 && avgUsage < 0.1) {
+        if (this.usage[session.instance.id.toString()].length > 30 && avgUsage < this.utilizationThreshold) {
           logger.warn(`GPU on Instance ${session.instance.id} is underutilized: ${avgUsage}`)
+          await this.blockAndTerminate(session.instance)
         }
       }
 
