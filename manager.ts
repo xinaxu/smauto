@@ -86,6 +86,9 @@ export default class SessionManager {
         const avgUtilization = utilizations.reduce((a, b) => a + b, 0) / utilizations.length
         this.usage[session.instance.id.toString()] = this.usage[session.instance.id.toString()] || []
         this.usage[session.instance.id.toString()].push(avgUtilization)
+        if (this.usage[session.instance.id.toString()].length > 60) {
+          this.usage[session.instance.id.toString()].shift()
+        }
         const avgUsage = this.usage[session.instance.id.toString()].reduce((a, b) => a + b, 0) / this.usage[session.instance.id.toString()].length
         if (this.usage[session.instance.id.toString()].length > 30 && avgUsage < this.utilizationThreshold) {
           logger.warn(`GPU on Instance ${session.instance.id} is underutilized: ${avgUsage}`)
