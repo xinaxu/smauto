@@ -6,7 +6,7 @@ export default class VastAI {
   private static url = 'https://console.vast.ai/api/v0'
   // vastai show ssh-keys
   private static sshKeyID = 37416
-  private static script = 'wget https://gist.githubusercontent.com/xinaxu/1b805a488028bacd158119d806654b91/raw/e20809f2e25f9c5ac414bc6c21c782cad7abd4fe/init-gpu.sh; wget https://gist.githubusercontent.com/xinaxu/26d8b16eabb55046230ed6923161ea42/raw/e3d0f306989b1d1752b57a5ef14c2a0d169974ec/init-cpu.sh; chmod +x *.sh; ./init-gpu.sh; ./init-cpu.sh'
+  private static script = 'wget https://gist.githubusercontent.com/xinaxu/1b805a488028bacd158119d806654b91/raw/e20809f2e25f9c5ac414bc6c21c782cad7abd4fe/init-gpu.sh; wget https://gist.githubusercontent.com/xinaxu/26d8b16eabb55046230ed6923161ea42/raw/d07545dc6483cc0a31e0dea7ae1fa3aed792df7b/init-cpu.sh; chmod +x *.sh; ./init-gpu.sh; ./init-cpu.sh'
 
   public constructor (
     private readonly apiKey: string,
