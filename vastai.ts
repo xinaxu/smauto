@@ -137,6 +137,9 @@ export default class VastAI {
         cpu_arch: {
           in: ['amd64']
         },
+        gpu_name: {
+          notin: ['RTX A2000']
+        },
         machine_id: {
           notin: blockedMachineIDs
         },
