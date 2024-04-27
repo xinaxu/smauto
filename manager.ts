@@ -61,7 +61,7 @@ export default class SessionManager {
 
       const sshResult = await execa(
         'ssh',
-        ['-o', 'ConnectTimeout=5', '-o', 'StrictHostKeyChecking=no', '-p',
+        ['-o', 'ConnectTimeout=5', '-o', 'StrictHostKeyChecking=no', '-o', 'PasswordAuthentication=no', '-p',
           session.instance.direct_port_start.toString(),
           'root@' + session.instance.public_ipaddr, 'nvidia-smi --query-gpu=power.draw,power.limit --format=csv,noheader,nounits'],
         { reject: false })
@@ -219,7 +219,7 @@ export default class SessionManager {
         await pRetry(async () => {
           const sshResult = await execa(
             'ssh',
-            ['-o', 'ConnectTimeout=5', '-o', 'StrictHostKeyChecking=no', '-p',
+            ['-o', 'ConnectTimeout=5', '-o', 'StrictHostKeyChecking=no','-o', 'PasswordAuthentication=no', '-p',
               session.instance.direct_port_start.toString(),
               'root@' + session.instance.public_ipaddr, 'ps aux'],
             { reject: false })
@@ -256,7 +256,7 @@ export default class SessionManager {
       //autossh -f -M 0 -L 10001:localhost:10088 -o "ServerAliveInterval=30" -o "ServerAliveCountMax=3" -p 46661 root@fiber1.kmidata.es
       execa('autossh', ['-f', '-N', '-M', '0', '-L',
         `${tunnelPort}:localhost:10088`,
-        '-o', 'ServerAliveInterval=30', '-o', 'ServerAliveCountMax=3',
+        '-o', 'ServerAliveInterval=30', '-o', 'ServerAliveCountMax=3', '-o', 'PasswordAuthentication=no',
         '-o', 'StrictHostKeyChecking=no', '-p',
         session.instance.direct_port_start.toString(),
         `root@${session.instance.public_ipaddr}`])
