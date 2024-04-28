@@ -141,7 +141,7 @@ export default class VastAI {
           notin: ['RTX A2000']
         },
         machine_id: {
-          notin: blockedMachineIDs
+          notin: blockedMachineIDs.length > 0 ? blockedMachineIDs : [0]
         },
         limit: 1000
       }
