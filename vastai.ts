@@ -15,7 +15,7 @@ export default class VastAI {
     private readonly reliability: number = 0.95,
     private readonly verified: boolean = false,
     private readonly external: boolean = true,
-    private readonly inetUp: number = 400,
+    private readonly inetUp: number = 300,
     private readonly inetUpCost: number = 0.005,
     private readonly inetDownCost: number = 0.004,
     private readonly tflops: number = 10,

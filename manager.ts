@@ -255,7 +255,7 @@ export default class SessionManager {
 
       //autossh -f -M 0 -L 10001:localhost:10088 -o "ServerAliveInterval=30" -o "ServerAliveCountMax=3" -p 46661 root@fiber1.kmidata.es
       execa('autossh', ['-f', '-N', '-M', '0', '-L',
-        `${tunnelPort}:localhost:10088`,
+        `0.0.0.0:${tunnelPort}:localhost:10088`,
         '-o', 'ServerAliveInterval=30', '-o', 'ServerAliveCountMax=3', '-o', 'PasswordAuthentication=no',
         '-o', 'StrictHostKeyChecking=no', '-p',
         session.instance.direct_port_start.toString(),
@@ -277,7 +277,7 @@ export default class SessionManager {
     }
     logger.info(`Found ${sessions.length} instances`)
     const sshTunnels: SSHTunnel[] = []
-    // autossh -f -M 0 -L 10001:localhost:10088 -o "ServerAliveInterval=30" -o "ServerAliveCountMax=3" -p 46661 root@fiber1.kmidata.es
+    // autossh -f -M 0 -L 0.0.0.0:10001:localhost:10088 -o "ServerAliveInterval=30" -o "ServerAliveCountMax=3" -p 46661 root@fiber1.kmidata.es
     const { stdout } = await execa('ps', ['-C', 'autossh', '-o', 'pid=,cmd='], { reject: false })
     logger.debug('autossh stdout: \n' + stdout)
     const lines = (stdout as any as string).split('\n')
@@ -301,7 +301,7 @@ export default class SessionManager {
       }
       const remotePort = parseInt(remotePortMatch[1])
       // local port is the integer after '-L'
-      const localPortMatch = line.match(/-L (\d+):/)
+      const localPortMatch = line.match(/-L 0.0.0.0:(\d+):/)
       if (!localPortMatch) {
         throw new Error(`Could not parse local port: ${line}`)
       }
