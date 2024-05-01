@@ -139,6 +139,7 @@ export default class SessionManager {
         offer.total_flops / offer.dph_total > 82.6 / (this.max3090Price / 0.6) :
         offer.total_flops / offer.dph_total > 35.3 / this.max3090Price)
       .filter(offer => offer.inet_up > 5 * offer.total_flops)
+      .filter(offer => offer.num_gpus <= 1 || offer.geolocation == 'US' || offer.geolocation == 'CA')
       .filter(offer => {
         const found = this.throttledIPs.find(ip => offer.public_ipaddr.startsWith(ip))
         if (!found) {
