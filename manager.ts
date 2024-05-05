@@ -7,6 +7,25 @@ import logger from './logger.ts'
 import { table } from 'table'
 import pRetry from 'p-retry'
 
+const tdp: {[key:string]: number} = {
+  'rtx 4090' : 450,
+  'rtx 4080 super': 320,
+  'rtx 4080': 320,
+  'rtx 4070 ti super': 285,
+  'rtx 4070 ti': 285,
+  'rtx 4070 super': 220,
+  'rtx 4070': 200,
+  'rtx 4060 ti': 160,
+  'rtx 3090 ti': 450,
+  'rtx 3090': 350,
+  'rtx 3080 ti': 350,
+  'rtx 3080': 320,
+  'rtx 3070 ti': 290,
+  'rtx 3070': 220,
+  'rtx 3060 ti': 200,
+  'rtx 3060': 170
+}
+
 export default class SessionManager {
   private blockedMachineIDs: number[] = []
   private throttledIPs: string[] = []
@@ -78,11 +97,9 @@ export default class SessionManager {
         }
         const power = parseFloat(cells[0])
         const limit = parseFloat(cells[1])
-        if (session.instance.gpu_name.includes('4090') && limit < 400
-          || session.instance.gpu_name.includes('3080 ti') && limit < 350
-          || session.instance.gpu_name.includes('3080') && limit < 320
-          || session.instance.gpu_name.includes('3090') && limit < 350) {
-          logger.warn(`GPU ${session.instance.gpu_name} on Instance ${session.instance.id} is underpowered: ${power}/${limit}`)
+        const gpuName = session.instance.gpu_name.toLowerCase()
+        if (tdp[gpuName] && tdp[gpuName] > limit) {
+          logger.warn(`GPU ${session.instance.gpu_name} on Instance ${session.instance.id} is underpowered: ${power}/${limit}. Should be ${tdp[gpuName]}W`)
         }
         utilizations.push(power / limit)
       }
