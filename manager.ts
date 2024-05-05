@@ -70,7 +70,7 @@ export default class SessionManager {
         await this.blockAndTerminate(session.instance)
       }
 
-      const utilizations :number[] = []
+      const utilizations: number[] = []
       for (let line of sshResult.stdout.split('\n')) {
         const cells = line.split(',')
         if (cells.length !== 2) {
@@ -78,6 +78,12 @@ export default class SessionManager {
         }
         const power = parseFloat(cells[0])
         const limit = parseFloat(cells[1])
+        if (session.instance.gpu_name.includes('4090') && limit < 400
+          || session.instance.gpu_name.includes('3080 ti') && limit < 350
+          || session.instance.gpu_name.includes('3080') && limit < 320
+          || session.instance.gpu_name.includes('3090') && limit < 350) {
+          logger.warn(`GPU ${session.instance.gpu_name} on Instance ${session.instance.id} is underpowered: ${power}/${limit}`)
+        }
         utilizations.push(power / limit)
       }
       if (utilizations.length === 0) {
@@ -105,7 +111,7 @@ export default class SessionManager {
 
   private print () {
     const data: string[][] = []
-    data.push(['Instance ID', 'Status', 'Host', 'Port', 'GPU', 'Price', 'Tunnel Port', 'SSH PID', 'GPU Usage','Reported Usage'])
+    data.push(['Instance ID', 'Status', 'Host', 'Port', 'GPU', 'Price', 'Tunnel Port', 'SSH PID', 'GPU Usage', 'Reported Usage'])
     for (let session of this.sessions) {
       const avgUsage = this.usage[session.instance.id.toString()]?.reduce((a, b) => a + b, 0) / this.usage[session.instance.id.toString()]?.length
       data.push([
@@ -220,7 +226,7 @@ export default class SessionManager {
         await pRetry(async () => {
           const sshResult = await execa(
             'ssh',
-            ['-o', 'ConnectTimeout=5', '-o', 'StrictHostKeyChecking=no','-o', 'PasswordAuthentication=no', '-p',
+            ['-o', 'ConnectTimeout=5', '-o', 'StrictHostKeyChecking=no', '-o', 'PasswordAuthentication=no', '-p',
               session.instance.direct_port_start.toString(),
               'root@' + session.instance.public_ipaddr, 'ps aux'],
             { reject: false })
