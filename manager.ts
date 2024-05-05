@@ -100,6 +100,8 @@ export default class SessionManager {
         const gpuName = session.instance.gpu_name.toLowerCase()
         if (tdp[gpuName] && tdp[gpuName] > limit) {
           logger.warn(`GPU ${session.instance.gpu_name} on Instance ${session.instance.id} is underpowered: ${power}/${limit}. Should be ${tdp[gpuName]}W`)
+          await this.blockAndTerminate(session.instance)
+          break
         }
         utilizations.push(power / limit)
       }
